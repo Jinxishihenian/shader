@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>射线拾取模型</title>
+</head>
+<body>
+
+</body>
+<script src="https://cdn.jsdelivr.net/npm/three@0.131.1/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.131.1/examples/js/controls/OrbitControls.js"></script>
+<!-- 引入 dat.GUI -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js"></script>
+<script>
+    // 3D场景.
+    const scene = new THREE.Scene();
+    const gui = new dat.GUI();
+    const obj = {
+        x: 30,
+    };
+    // gui增加交互界面，用来改变obj对应属性
+    gui.add(obj, 'x', 0, 100);
+    // 几何体.
+    const geomety = new THREE.SphereGeometry(25, 50, 50);
+
+    // 形状.
+    const material = new THREE.MeshLambertMaterial({
+        color: 0x009999
+    });
+
+    // 网格.
+    const mesh1 = new THREE.Mesh(geomety, material);
+    const mesh2 = mesh1.clone();
+    mesh2.position.y = 100;
+    const mesh3 = mesh2.clone();
+    mesh3.position.x = 100;
+
+    scene.add(mesh1, mesh2, mesh3);
+
+
+    // 三个网格模型mesh1,mesh2,mesh3用于射线拾取测试(分组对象).
+    const model = new THREE.Group();
+    // 移除移除原来的网格.
+    scene.remove(mesh1, mesh2, mesh3);
+    model.add(mesh1, mesh2, mesh3);
+    // 将分组加入.
+    scene.add(model);
+    // 更新分组.
+    model.updateMatrixWorld(true);
+
+
+    // 增加光源.
+    const ambient = new THREE.AmbientLight(
+        0xffffff, 0.5
+    );
+    scene.add(ambient);
+    // 创建射线投射器.
+    const raycaster = new THREE.Raycaster();
+    // 设置射线起点.
+    raycaster.ray.origin = new THREE.Vector3(-100, 0, 0);
+    // 设置射线方向沿着x轴.
+    raycaster.ray.direction = new THREE.Vector3(1, 0, 0);
+
+    // 射线发射拾取模型对象.
+    // const intersectes = raycaster.intersectObjects([mesh1, mesh2, mesh3]);
+    // if (intersectes.length > 0) {
+    //     intersectes[0].object.material.color.set(0xff0000);
+    // }
+    // 相机.
+    const camera = new THREE.PerspectiveCamera();
+
+    // 设置相机位置.
+    camera.position.set(500, 500, 500);
+    camera.lookAt(scene.position);
+
+
+    // 增加辅助坐标系.
+    const axesHepler = new THREE.AxesHelper(1000);
+
+    scene.add(axesHepler);
+
+    // 创建渲染对象.
+    const renderer = new THREE.WebGLRenderer();
+
+    // 创建射线.
+    const ray = new THREE.Ray();
+
+    //
+    renderer.domElement.addEventListener('click', function (event) {
+        const px = event.offsetX;
+        const py = event.offsetY;
+        // 屏幕坐标px,py转WebGL标准设备坐标x,y.
+        // width,height 表示canvas画布的宽高.
+        const x = (px / 800) * 2 - 1;
+        const y = - (py / 500) * 2 + 1;
+        // 点击时创建一个投射器.
+        const raycaster = new THREE.Raycaster();
+        // 在点击位置创建一条射线，射线穿过的模型代表选中.
+        raycaster.setFromCamera(new THREE.Vector2(x, y), camera);
+        // 未选中对象返回空数组.
+        const intersects = raycaster.intersectObjects([mesh1, mesh2, mesh3]);
+        console.log('选中内容');
+        console.log(intersects.length);
+        if (intersects.length > 0) {
+            intersects[0].object.material.color.set(0xff0000);
+            renderer.render(scene, camera);
+        }
+    },);
+
+    // 设置画布尺寸.
+    renderer.setSize(800, 500);
+
+    renderer.render(scene, camera);
+
+    // 加入到DOM中.
+    document.body.appendChild(renderer.domElement);
+
+</script>
+</html>

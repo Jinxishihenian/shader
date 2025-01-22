@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div id="canvas" width="800px" height="600px"></div>
+<div>
+    <input type="checkbox" id="Light1" name="Light1" value="Light1" checked>
+    <label for="Light1"> Light1</label><br>
+    <input type="checkbox" id="Light2" name="Light2" value="Light2" checked>
+    <label for="Light2"> Light2</label><br>
+</div>
+</body>
+<script type="module">
+    import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.167.0/three.module.min.js';
+
+    // import { GLTFLoader } from 'https://unpkg.com/three@0.154.0/examples/jsm/loaders/GLTFLoader.js';
+
+    Light2.addEventListener('change', () => {
+        LightFunc();
+    });
+
+    Light2.addEventListener('change', () => {
+        LightFunc();
+    });
+
+    function LightFunc(Light) {
+
+        scene.remove(spotLight1);
+        scene.remove(spotLight2);
+        // cubeMaterial.needsUpdate=true;
+        // planeMaterial.needsUpdate=true;
+
+        if (document.getElementById('Light1').checked) {
+            spotLight1 = new THREE.SpotLight(0xffffff, 1000);
+            spotLight1.position.set(15, 30, 50);
+            // spotLight1.castShadow = true;
+            scene.add(spotLight1);
+        }
+        if (document.getElementById('Light2').checked) {
+            spotLight2 = new THREE.SpotLight(0xffffff, 1000);
+            spotLight2.position.set(15, 30, -50);
+            // spotLight2.castShadow = true;
+            scene.add(spotLight2);
+        }
+
+        renderer.render(scene, camera); // FIX
+
+    }
+
+    // step1: how to create scene
+    var scene = new THREE.Scene();
+
+    // step2: how to create camera
+    var camera = new THREE.PerspectiveCamera(45, 4 / 3, .1, 500)
+    camera.position.set(40, 40, 40);
+    camera.lookAt(scene.position);
+
+    // step3: how to create renderer
+    // var renderer = new THREE.WebGLRenderer();
+    var renderer = new THREE.WebGLRenderer();
+    renderer.setClearColor(0xdddddd);
+    renderer.setSize(800, 600);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+    // step4: how to create axis
+    var axis = new THREE.AxesHelper(10);
+    scene.add(axis);
+
+    // step5: how to create color
+    var color = new THREE.Color("rgb(255, 0, 0)");
+
+    // step6: how to create grid
+    var grid = new THREE.GridHelper(50, 5, color, 0x000000);
+    scene.add(grid);
+
+    // step7: how to create cube
+    var cubeGeo = new THREE.BoxGeometry(5, 5, 5);
+    var cubeMaterial = new THREE.MeshLambertMaterial({color: 0xff3300});
+    var cube = new THREE.Mesh(cubeGeo, cubeMaterial);
+    cube.position.set(2.5, 2.5, 2.5);
+    cube.castShadow = true;
+    cube.receiveShadow = false;
+    scene.add(cube);
+
+    // step8: how to create plane
+    var planeGeo = new THREE.PlaneGeometry(30, 30, 30);
+    var planeMaterial = new THREE.MeshLambertMaterial({color: 0x00ff00});
+    var plane = new THREE.Mesh(planeGeo, planeMaterial);
+    plane.rotation.x = -.5 * Math.PI;
+    plane.receiveShadow = true;
+    scene.add(plane);
+
+    // step9: how to create spot lights
+
+    var spotLight1 = new THREE.AmbientLight(0xffffff, 1);
+    spotLight1.position.set(15, 30, 50);
+    // spotLight1.castShadow = true;
+    scene.add(spotLight1);
+
+    var spotLight2 = new THREE.AmbientLight(0xffffff, 1);
+    spotLight2.position.set(15, 30, -50);
+    // spotLight2.castShadow = true;
+    scene.add(spotLight2);
+
+    var canvas = document.getElementById("canvas");
+    canvas.appendChild(renderer.domElement);
+    renderer.render(scene, camera);
+    // const loader = new GLTFLoader();
+    // loader.load(
+    //     "../image/test.glb",
+    //     function (gltf) {
+    //
+    //         scene.add(gltf.scene);
+    //         renderer.render(scene,camera);
+    //
+    //     },
+    //     undefined,
+    //     function (error) {
+    //         console.error(error);
+    //     }
+    // );
+
+</script>
+</html>

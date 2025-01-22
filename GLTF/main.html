@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>GLTF</title>
+</head>
+<body>
+
+</body>
+<script src="https://cdn.jsdelivr.net/npm/three@0.131.1/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.130.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.131.1/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.131.1/examples/js/shaders/CopyShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.131.1/examples/js/postprocessing/ShaderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.131.1/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.131.1/examples/js/postprocessing/OutlinePass.js"></script>
+<!--拖拽功能-->
+<script src="https://cdn.jsdelivr.net/npm/three@0.131.1/examples/js/controls/DragControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.131.1/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.131.1/examples/js/renderers/CSS2DRenderer.js"></script>
+<script src="https://threejs.org/build/three.js"></script>
+<script src="https://threejs.org/examples/js/loaders/GLTFLoader.js"></script>
+<script>
+    async function init() {
+        // 创建场景
+        const scene = new THREE.Scene();
+        // 包围盒
+        const box3 = new THREE.Box3();
+
+
+        // 自定义形状.
+        const geometry = new THREE.BufferGeometry();
+        //类型化数组创建顶点数据
+        // const vertices = new Float32Array([
+        //     0, 0, 0, //顶点1坐标
+        //     50, 0, 0, //顶点2坐标
+        //     0, 100, 0, //顶点3坐标
+        //     0, 0, 10, //顶点4坐标
+        //     0, 0, 100, //顶点5坐标
+        //     50, 0, 10, //顶点6坐标
+        // ]);
+
+        const vertices = new Float32Array([
+            0, 0, 0, //顶点1坐标
+            80, 0, 0, //顶点2坐标
+            80, 80, 0, //顶点3坐标
+
+            0, 0, 0, //顶点4坐标   和顶点1位置相同
+            80, 80, 0, //顶点5坐标  和顶点3位置相同
+            0, 80, 0, //顶点6坐标
+        ]);
+        const attribue = new THREE.BufferAttribute(vertices, 3);
+
+        geometry.attributes.position = attribue;
+        // 创建材质.
+
+        const material = new THREE.PointsMaterial({
+            color: 0xff0000,
+            size: 10.0, //点对象像素尺寸
+            //两面可见
+            side: THREE.DoubleSide,
+
+        });
+        // 点模型.
+        const points = new THREE.Points(geometry, material); //点模型对象
+        // 线模型.
+        const line = new THREE.Mesh(geometry, material);
+        // 闭合线条
+        // const line = new THREE.LineLoop(geometry, material);
+        // scene.add(points);
+        //非连续的线条
+        // const line = new THREE.LineSegments(geometry, material);
+        scene.add(line);
+
+        // 创建相机
+        const camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 1, 3000);
+        camera.position.set(600, 600, 600);
+        camera.lookAt(0, 0, 0);
+
+        // 创建光源
+        const pointLight = new THREE.PointLight(0xffffff, 1.0);
+        pointLight.position.set(1000, 1000, 1000);
+        scene.add(pointLight);
+        // 创建渲染器
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // 辅助观察坐标系
+        const axesHelper = new THREE.AxesHelper(10000);
+        scene.add(axesHelper);
+        // 确保已经有这些基础设置
+        const objects = []; // 这个数组应包含所有您希望能拖拽的对象
+        // 创建GLTF加载器对象
+        const loader = new THREE.GLTFLoader();
+        await loader.load(
+            "../image/pig.glb",
+            function (gltf) {
+                // console.log('控制台1', gltf);
+                // console.log('控制台2', gltf.scene);
+                // console.log('控制台3', gltf.scene.children.length);
+                gltf.scene.position.set(100, 100, 100); // 设置模型位置.
+                objects.push(...gltf.scene.children);
+                // 创建 DragControls
+                const dragControls = new THREE.DragControls(gltf.scene.children, camera, renderer.domElement);
+
+                // 添加事件监听来响应拖拽事件
+                dragControls.addEventListener('dragstart', function (event) {
+                    controls.enabled = false; // 当开始拖拽时，禁用 OrbitControls
+                });
+
+                dragControls.addEventListener('dragend', function (event) {
+                    controls.enabled = true; // 当拖拽结束时，启用 OrbitControls
+                });
+
+
+                scene.add(gltf.scene);
+                // 让小猪发光.
+                // 建立后处理对象.
+                const composer = new THREE.EffectComposer(renderer);
+                // 建立两个通道.
+                const v2 = new THREE.Vector2(window.innerWidth, window.innerHeight);
+                const renderPass = new THREE.RenderPass(scene, camera);
+                const outlinePass = new THREE.OutlinePass(v2, scene, camera);
+                console.log('===');
+                console.log(objects.length);
+                outlinePass.selectedObjects = objects;
+                // 模型描边颜色.
+                outlinePass.visibleEdgeColor.set(0xffff00);
+                outlinePass.edgeThickness = 1;
+
+                //高亮描边发光强度
+                outlinePass.edgeStrength = 6;
+                outlinePass.depthTest = true;
+                composer.addPass(renderPass);
+                composer.addPass(outlinePass);
+
+                function animate() {
+                    requestAnimationFrame(animate);
+
+                    // 控制模型旋转
+                    // gltf.scene.rotation.y += 0.01; // 调整旋转速度
+
+                    // 更新渲染
+                    // renderer.render(scene, camera);
+                    composer.render();
+                }
+
+// 开始渲染循环
+                animate();
+                // gltf.rotateY(Math.PI/4);
+            },
+            undefined,
+            function (error) {
+                console.error(error);
+            }
+        );
+
+        function animate() {
+            requestAnimationFrame(animate);
+            // 控制模型旋转
+            // 更新渲染
+            renderer.render(scene, camera);
+        }
+
+        // 创建 DragControls
+        // const dragControls = new THREE.DragControls(objects, camera, renderer.domElement);
+        //
+        // // 添加事件监听来响应拖拽事件
+        // dragControls.addEventListener('dragstart', function (event) {
+        //     controls.enabled = false; // 当开始拖拽时，禁用 OrbitControls
+        // });
+        //
+        // dragControls.addEventListener('dragend', function (event) {
+        //     controls.enabled = true; // 当拖拽结束时，启用 OrbitControls
+        // });
+        // 开始渲染循环
+        // 增加相机控件.
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.addEventListener('change', function () {
+            renderer.render(scene, camera);
+        });
+        animate();
+
+
+    }
+
+    init();
+</script>
+</html>
+

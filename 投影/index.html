@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THREE.js Parallel Light Shadows</title>
+    <style>
+        body {
+            margin: 0;
+        }
+
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/loaders/GLTFLoader.js"></script>
+</head>
+
+<script>
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 10);
+    // 半球光.
+    const fillLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 1);
+    scene.add(directionalLight);
+    scene.add(fillLight);
+    const loader = new THREE.GLTFLoader();
+    loader.load(
+        'http://192.168.1.37:5173/assets/gltfs/nvyishenghunhe.glb', // 替换为你的 GLB 文件的 URL
+        function (gltf) {
+            const model = gltf.scene;
+            scene.add(model);
+            animate(); // Start the animation loop once the model is loaded
+        },
+        function (xhr) {
+            console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+        },
+        function (error) {
+            console.error('An error happened', error);
+        }
+    );
+
+    const helper = new THREE.CameraHelper(directionalLight.shadow.camera);
+    scene.add(helper);
+
+
+    camera.position.set(0, 0, 5);
+    camera.lookAt(0, 0, 0);
+
+    // Animation loop
+    function animate() {
+        requestAnimationFrame(animate);
+
+        renderer.render(scene, camera);
+    }
+
+    animate();
+</script>
+</body>
+</html>

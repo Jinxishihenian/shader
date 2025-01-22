@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Three.js Glowing Rotating Cube</title>
+  <style>
+    body { margin: 0; }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+<!-- 引入 Three.js 和其扩展 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r152/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r152/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r152/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r152/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r152/examples/js/postprocessing/UnrealBloomPass.js"></script>
+
+<script>
+  // 创建场景、相机和渲染器
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
+
+  // 设置相机位置
+  camera.position.set(0, 0, 10);
+
+  // 创建控制器
+  // const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  // controls.enableDamping = true;
+
+  // 创建 EffectComposer 和 passes
+  const composer = new THREE.EffectComposer(renderer);
+  const renderPass = new THREE.RenderPass(scene, camera);
+  composer.addPass(renderPass);
+
+  const bloomPass = new THREE.UnrealBloomPass(
+          new THREE.Vector2(window.innerWidth, window.innerHeight),
+          1.5, // strength
+          0.4, // radius
+          0.85 // threshold
+  );
+  composer.addPass(bloomPass);
+
+  // 创建正方体并添加到场景中
+  const geometry = new THREE.BoxGeometry(1, 1, 1);
+  const material = new THREE.MeshStandardMaterial({
+    color: 0x00ff00,
+    emissive: 0x00ff00,
+    emissiveIntensity: 1.0
+  });
+  const cube = new THREE.Mesh(geometry, material);
+  scene.add(cube);
+
+  // 添加偏冷光的半光球
+  const hemisphereLight = new THREE.HemisphereLight(0x99ccff, 0x003366, 1.0); // 上光颜色（冷色调），下光颜色，光强
+  scene.add(hemisphereLight);
+
+  // 添加方向光
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+  directionalLight.position.set(5, 10, 7.5);
+  scene.add(directionalLight);
+
+  // 渲染循环
+  function animate() {
+    requestAnimationFrame(animate);
+
+    // 旋转正方体
+    // cube.rotation.x += 0.01;
+    // cube.rotation.y += 0.01;
+
+    // 更新控制器
+    controls.update();
+
+    // 使用 composer 进行后处理渲染
+    composer.render();
+  }
+
+  animate();
+
+  // 处理窗口调整大小
+  window.addEventListener('resize', () => {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+
+    renderer.setSize(width, height);
+    composer.setSize(width, height);
+  });
+</script>
+</body>
+</html>

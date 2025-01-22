@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>全景图片实现方案</title>
+</head>
+<body>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/three@0.131.1/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.131.1/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.131.1/examples/js/shaders/CopyShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.131.1/examples/js/postprocessing/ShaderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.131.1/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.131.1/examples/js/postprocessing/OutlinePass.js"></script>
+<!--拖拽功能-->
+<script src="https://cdn.jsdelivr.net/npm/three@0.131.1/examples/js/controls/DragControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.131.1/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.131.1/examples/js/renderers/CSS2DRenderer.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/23.1.1/tween.umd.js"></script>
+<script>
+    // 创建精灵图.
+
+
+    // 添加场景.
+    var scene = new THREE.Scene();
+
+    function createSprite() {
+        const url = 'https://cdn.huodao.hk/upload_img/20220621/1eca2b6efe7aab01d42ca45345f46a90.png?proportion=0.98';
+        const texture = new THREE.TextureLoader().load(url);
+        const material = new THREE.SpriteMaterial({map: texture});
+        const sprite = new THREE.Sprite(material);
+        // 设置大小，位置，内容.
+        sprite.scale.set(0.5, 0.5, 0.5);
+        // 加入场景中.
+        sprite.position.set(0.4, 0, -4.5);
+        // 加入场景中.
+        scene.add(sprite);
+    }
+
+
+    createSprite();
+    // 创建相机.
+    var camera = new THREE.PerspectiveCamera(75, window.innerHeight / window.innerWidth, 0.1, 1000);
+    camera.position.set(0, 0, 1);
+    // 渲染器.
+    var renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerWidth);
+
+    // 串门功能.
+    function gotoRoom(event) {
+        event.preventDefault();
+        const {clientX, clientY} = event;
+        console.log('clientX');
+        console.log('clientY');
+        console.log(clientX, clientY);
+        const dom = renderer.domElement;
+        const domRect = dom.getBoundingClientRect();
+        const x = ((clientX - domRect.left) / dom.clientWidth) * 2 - 1;
+        const y = ((clientY - domRect.top) / dom.clientHeight) * 2 - 1;
+        console.log('计算标准设备坐标', clientX, clientY, x, y, domRect, dom.clientWidth, dom.clientHeight);
+        // 向量.
+        const vector = new THREE.Vector3(x, y);
+        // 转世界坐标.
+        const worldVector = vector.unproject(camera);
+        console.log('转世界坐标', worldVector);
+        // 射线.
+        const ray = worldVector.sub(camera.position).normalize();
+        // 射线投射对象.
+        const raycaster = new THREE.Raycaster(camera.position, ray);
+        raycaster.camera = camera;
+        const intersects = raycaster.intersectObjects(scene.children);
+        if (intersects.length > 0) {
+            console.log('捕获到对象', intersects);
+            const intersect = intersects[0];
+            console.log(intersect.object?.type);
+            console.log(intersect.object?.content?.isComeAround);
+            // intersect.object?.content?.isComeAround
+            if (intersect.object?.type == 'Sprite' && intersect.object?.content?.isComeAround) {
+                console.log('开始串门吧');
+            }
+        } else {
+            console.log('未捕获到对象');
+        }
+    }
+
+    window.addEventListener('click', gotoRoom);
+    document.body.appendChild(renderer.domElement);
+    // 创建立方体.
+    const geometry = new THREE.BoxGeometry(10, 10, 10);
+    // 左右，上下，前后.
+    const urls = [
+        'https://cdn.huodao.hk/upload_img/20220620/3e532822bd445485d27677ca55a79b10.jpg?proportion=1',
+        'https://cdn.huodao.hk/upload_img/20220620/cebf6fbcafdf4f5c945e0881418e34ec.jpg?proportion=1',
+        'https://cdn.huodao.hk/upload_img/20220620/273081d1896fc66866842543090916d3.jpg?proportion=1',
+        'https://cdn.huodao.hk/upload_img/20220620/8747f61fd2215aa748dd2afb6dce3822.jpg?proportion=1',
+        'https://cdn.huodao.hk/upload_img/20220620/c34262935511d61b2e9f456b689f5c1c.jpg?proportion=1',
+        'https://cdn.huodao.hk/upload_img/20220620/722d2bf88f6087800ddf116511b51e73.jpg?proportion=1'
+    ]
+    const boxMaterial = [];
+    // urls.forEach((item) => {
+    //     // 纹理加载器.
+    //     const texture = new THREE.TextureLoader().load(item);
+    //     if (item == '4_u' || item == '4_d') {
+    //         texture.rotation = Math.PI;
+    //         texture.center = new THREE.Vector2(0.5, 0, 5);
+    //         print('是否启用..');
+    //     }
+    //     // 创建材质.
+    //     boxMaterial.push(new THREE.MeshBasicMaterial({map: texture}));
+    // });
+    for(let i=0, len=urls.length; i<len; i++) {
+        const texture = new THREE.TextureLoader().load(urls[i])
+        if (i == 2 || i==3) {
+            texture.rotation = Math.PI
+            texture.center = new THREE.Vector2(0.5, 0.5)
+        }
+        boxMaterial.push(new THREE.MeshBasicMaterial({ map: texture }))
+    }
+
+
+    const house = new THREE.Mesh(geometry, boxMaterial);
+    house.geometry.scale(1, 1, -1);
+    scene.add(house);
+    // 添加交互控制.
+    var controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 0, 0); // 设置 OrbitControls 的目标位置
+    function animate() {
+        requestAnimationFrame(animate);
+
+        renderer.render(scene, camera);
+    }
+
+    animate();
+</script>
+</html>
+

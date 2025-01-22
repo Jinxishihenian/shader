@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>基础概念</title>
+</head>
+<body>
+ 
+</body>
+<script src="https://cdn.jsdelivr.net/npm/three@0.131.1/build/three.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.131.1/examples/js/controls/OrbitControls.js"></script>
+<script>
+// 3D场景. 
+const scene = new THREE.Scene();
+
+// 相机.
+const camera = new THREE.PerspectiveCamera(
+	// 视野角度.
+	75,
+	// 宽高比.
+	window.innerWidth/window.innerHeight,
+	// 近剪切面.
+	0.1,
+	// 远剪切面.
+	1000,
+);
+
+
+// 相机位置.
+camera.position.set(100,100,900);
+
+// 相机观察目标位置. 
+camera.lookAt(0,0,0);
+// 几何体与材质. 
+const geometry = new THREE.BoxGeometry(100, 100, 100);
+
+// 不受光源影响.
+// const material = new THREE.MeshBasicMaterial({ 
+// 	color: 0xff0000,
+// 	transparent:true,
+// 	opacity:0.5,
+//  });
+
+// 受光源影响
+const material = new THREE.MeshLambertMaterial(); 
+
+const cube = new THREE.Mesh(geometry, material);
+// 添加到场景中
+scene.add(cube);
+
+// 点光.
+// const light = new THREE.PointLight(0xffffff, 1, 100);
+// 环境光.
+// const light = new THREE.AmbientLight(0xffffff, 0.4);
+// 平行光. 
+const light = new THREE.DirectionalLight(0xffffff, 1);
+// 设置光源的方向：通过光源position属性和目标指向对象的position属性计算
+light.position.set(80, 100, 50);
+// 设置光照强度. 
+light.intensity = 5000;
+// 修改光源位置. 
+// light.position.set(400, 200, 300);
+light.position.set(100, 60, 50);
+
+// light.position.copy(camera.position);
+
+
+scene.add(light);
+ 
+// 创建WebGL渲染器. 
+const render = new THREE.WebGLRenderer(
+	{
+		antialias:true,
+	}
+); 
+render.setSize(window.innerWidth,window.innerHeight);
+
+
+// 辅助参考坐标系. 
+const axesHepler =new THREE.AxesHelper(1500); 
+scene.add(axesHepler);
+
+function animate() {
+  requestAnimationFrame(animate);
+
+  cube.rotation.x += 0.01;
+  cube.rotation.y += 0.01;
+	cube.rotation.z += 0.01;
+
+  render.render(scene, camera);
+}
+
+animate();
+document.body.appendChild(render.domElement);
+
+// 设置相机轨道控制器. 
+// 设置相机控件轨道控制器OrbitControls
+const controls = new THREE.OrbitControls(camera, render.domElement);
+// 如果OrbitControls改变了相机参数，重新调用渲染器渲染三维场景
+controls.addEventListener('change', function () {
+    // render.render(scene, camera); //执行渲染操作
+});//监听鼠标、键盘事件
+
+// 光源辅助观察
+const pointLightHelper = new THREE.PointLightHelper(light, 10);
+scene.add(light);
+</script>
+</html>

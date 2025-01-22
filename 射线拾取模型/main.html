@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>射线</title>
+</head>
+<body>
+ 
+</body>
+<script src="https://cdn.jsdelivr.net/npm/three@0.131.1/build/three.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.131.1/examples/js/controls/OrbitControls.js"></script>
+<script> 
+// 创建射线对象. 
+const ray = new THREE.Ray()
+// 设置射线起点. 
+// ray.origin = new THREE.Vector3(1,0,3);
+// 设置射线起点. 
+ray.origin.set(1,0,3); 
+// 射线方向,向量保证为1. 
+ray.direction = new THREE.Vector3(1,0,0); 
+
+// 三角形三个坐标.  
+const p1 = new THREE.Vector3(100,25,0); 
+const p2 = new THREE.Vector3(100,-25,25); 
+const p3 = new THREE.Vector3(100,-25,-25); 
+// 用来记录射线和三角形的交叉点.
+const point = new THREE.Vector3(); 
+// .intersectTriangle()计算射线和三角形是否交叉，相交返回交点，不相交返回null.  
+const result = ray.intersectTriangle(p1,p2,p3,true,point);
+// 背面剔除.
+// const result = ray.intersectTriangle(p1,p2,p3,false,point);               
+console.log('交叉点坐标',point);
+console.log('查看是否相交',result);
+</script>
+</html>

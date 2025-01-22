@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>射线</title>
+</head>
+<body>
+<div id="tag" style="background: aqua">
+    圆柱体
+</div>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/three@0.131.1/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.131.1/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.131.1/examples/js/shaders/CopyShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.131.1/examples/js/postprocessing/ShaderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.131.1/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.131.1/examples/js/postprocessing/OutlinePass.js"></script>
+<!--拖拽功能-->
+<script src="https://cdn.jsdelivr.net/npm/three@0.131.1/examples/js/controls/DragControls.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.131.1/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.131.1/examples/js/renderers/CSS2DRenderer.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/23.1.1/tween.umd.js"></script>
+<script>
+
+    // 场景
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xdddddd);
+    // // 标签.
+    const div = document.getElementById('tag');
+    const tag = new THREE.CSS2DObject(div);
+    tag.position.set(0, 75, 0);
+    // 创建一个CSS3渲染器CSS3DRenderer
+    const css3Renderer = new THREE.CSS2DRenderer();
+    css3Renderer.setSize(800, 500);
+    css3Renderer.domElement.style.position = 'absolute';
+    css3Renderer.domElement.style.top = '0px';
+    css3Renderer.domElement.style.pointerEvents = 'none';
+    document.body.appendChild(css3Renderer.domElement);
+    // 几何体(圆柱).
+    const geometry = new THREE.CylinderGeometry(50, 50, 150);
+    // 增加高光材质.
+    const material = new THREE.MeshPhongMaterial({
+        color: 0x6A5ACD,
+        shininess: 20,
+    });
+
+    const geometry2 = new THREE.BoxGeometry(100, 80, 90);
+    console.log('几何体数据结构',geometry2);
+    console.log('顶点位置数据',geometry2.vertices);
+    console.log('顶点纹理坐标',geometry2.faceVertexUvs);
+    console.log('几何体三角形信息',geometry2.faces);
+    const mesh2 = new THREE.Mesh(geometry2, material);
+    scene.add(mesh2)
+    // 增加网格.
+    const mesh = new THREE.Mesh(geometry, material);
+    scene.add(mesh);
+    scene.add(tag);
+    // const group = new THREE.Group();
+    // group.add(tag);
+    // 增加光源.
+    // 点光源.
+    // const light = new THREE.PointLight(0xFFFFFF, 1.5, 500);
+    // 环境光.
+    // const light = new THREE.AmbientLight(0xFFFFFF, 1.5, 500);
+    // 平行光.
+    const light = new THREE.DirectionalLight(0xFFFFFF, 1.5, 500);
+    light.position.set(200, 200, 200);
+    // 点辅助光源.
+    const pointLightHelper = new THREE.PointLightHelper(light, 10);
+    scene.add(pointLightHelper);
+    scene.add(light);
+    // 增加相机.
+    const camera = new THREE.PerspectiveCamera(30, 800 / 500, 1, 3000);
+    // 相机位置.
+    camera.position.set(500, 500, 500);
+    // 相机模板.
+    camera.lookAt(0, 0, 0);
+
+    // 辅助观察坐标系.
+    const axesHelper = new THREE.AxesHelper(10000);
+    scene.add(axesHelper);
+
+    // 创建渲染对象.
+    const renderer = new THREE.WebGLRenderer(
+        {
+            antialias: true,
+        }
+    );
+
+    // 设置canvas画布.
+    renderer.setSize(800, 500);
+    // 执行渲染操作.
+    renderer.render(scene, camera);
+    // 增加相机控件.
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    // tag.render(scene, camera);
+    // 下雨场景.
+    const texture = new THREE.TextureLoader().load("../image/yd.png");
+    const spriteMaterial = new THREE.SpriteMaterial({
+        map: texture,
+        // 透明度.
+        opacity: 0.5,
+        // sizeAttenuation: false
+    });
+    const sprite = new THREE.Sprite(spriteMaterial);
+    sprite.scale.set(10, 10, 1);
+    const group = new THREE.Group();
+    scene.add(group);
+    for (let i = 0; i < 1600; i++) {
+        // 精灵模型共享材质.
+        const sprite = new THREE.Sprite(spriteMaterial);
+        group.add(sprite);
+        // 设置精灵图模型位置，随机分布.
+        const x = 1000 * (Math.random() - 0.5);
+        const y = 600 * (Math.random());
+        const z = 1000 * (Math.random() - 0.5);
+        sprite.position.set(x, y, z);
+    }
+
+    // 确保已经有这些基础设置
+    const objects = [mesh]; // 这个数组应包含所有您希望能拖拽的对象
+
+    // 创建 DragControls
+    const dragControls = new THREE.DragControls(objects, camera, renderer.domElement);
+
+    // 添加事件监听来响应拖拽事件
+    dragControls.addEventListener('dragstart', function (event) {
+        controls.enabled = false; // 当开始拖拽时，禁用 OrbitControls
+    });
+
+    dragControls.addEventListener('dragend', function (event) {
+        controls.enabled = true; // 当拖拽结束时，启用 OrbitControls
+    });
+    // 创建后处理对象.
+    const composer = new THREE.EffectComposer(renderer);
+
+
+    // 创建通道.
+    const v2 = new THREE.Vector2(800, 500);
+    const renderPass = new THREE.RenderPass(scene, camera);
+    const outlinePass = new THREE.OutlinePass(v2, scene, camera);
+    outlinePass.selectedObjects = [mesh];
+    //模型描边颜色，默认白色
+    outlinePass.visibleEdgeColor.set(0xffff00);
+    //高亮发光描边厚度
+    outlinePass.edgeThickness = 1;
+    //高亮描边发光强度
+    outlinePass.edgeStrength = 6;
+    //模型闪烁频率控制，默认0不闪烁
+    outlinePass.pulsePeriod = 6;
+    outlinePass.depthTest = true;
+
+    composer.addPass(renderPass);
+    composer.addPass(outlinePass);
+
+    // 渲染循环
+    function render() {
+        group.children.forEach((sprite) => {
+            // 雨滴的y坐标每次减1.
+            sprite.position.y -= 4;
+            if (sprite.position.y < 0) {
+                sprite.position.y = 600;
+            }
+        });
+        // renderer.render(scene, camera)
+        composer.render();
+        // renderer.render(scene, camera);
+        css3Renderer.render(scene, camera);
+        requestAnimationFrame(render);
+    }
+
+    render();
+    controls.addEventListener('change', function () {
+        renderer.render(scene, camera);
+    });
+
+    // 渲染到dom中.
+    document.body.appendChild(renderer.domElement);
+</script>
+</html>
+
