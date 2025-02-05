@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/three@0.131.1/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.131.1/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.131.1/examples/js/shaders/CopyShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.131.1/examples/js/postprocessing/ShaderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.131.1/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.131.1/examples/js/postprocessing/OutlinePass.js"></script>
+<!--拖拽功能-->
+<script src="https://cdn.jsdelivr.net/npm/three@0.131.1/examples/js/controls/DragControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.131.1/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.131.1/examples/js/renderers/CSS2DRenderer.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/23.1.1/tween.umd.js"></script>
+<script type="module">
+  // 创建一个场景.
+  const scene = new THREE.Scene()
+  // 创建一个相机.
+  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
+  // 创建一个几何体.
+  const geometry = new THREE.BoxGeometry(1, 1, 1)
+  const material = new THREE.MeshBasicMaterial({ color: 0x00ff0 })
+  const cube = new THREE.Mesh(geometry, material)
+  scene.add(cube)
+  camera.position.z = 50
+  camera.position.x = 50
+  camera.position.y = 50
+  camera.lookAt(0, 0, 0)
+
+  const renderer = new THREE.WebGLRenderer()
+  renderer.setSize(window.innerWidth, window.innerHeight)
+  document.body.appendChild(renderer.domElement)
+
+  cube.rotation.x += 0.01
+  cube.rotation.y += 0.01
+  // 辅助观察坐标系.
+  const axesHelper = new THREE.AxesHelper(10000)
+  scene.add(axesHelper)
+  // 动画.
+  const clock = new THREE.Clock()
+  // 增加一个平行光.
+  const directionalLight = new THREE.DirectionalLight(0xFFFFFF, 1)
+  directionalLight.position.set(110, 30, 100)
+  scene.add(directionalLight)
+  // 添加一个环境光.
+  const ambientLight = new THREE.AmbientLight(0x404040)
+  scene.add(ambientLight)
+
+  // 创建一个物理材质圆球.
+  const sphereGeometry = new THREE.SphereGeometry(20, 132, 132)
+  const sphereMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 })
+  const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial)
+  sphere.position.set(1, 1, 1)
+  scene.add(sphere)
+
+  // 增加一个绿色的背景.
+  // scene.background = new THREE.Color(0x00ff00)
+  // 增加一个灰色背景.
+  scene.background = new THREE.Color(0x404040)
+
+  // 自定义材质.
+  function buildTwistMaterial (amount) {
+    // 形状.
+    console.log('--------------')
+    // const material2 = new THREE.MeshNormalMaterial()
+    // 物理材质.
+    const material2 = new THREE.MeshPhysicalMaterial({
+      // color: 0x3A5FCD,
+      roughness: 0.7,
+      transmission: 1,
+      thickness: 1
+    })
+    material2.onBeforeCompile = function (shader) {
+      console.log('0000000000000')
+      console.log(material2.userData)
+      shader.uniforms.time = { value: 0 }
+      // 顶点着色器.
+      shader.vertexShader = 'uniform float time;\n' + shader.vertexShader
+
+      shader.vertexShader = shader.vertexShader.replace(
+        '#include <begin_vertex>',
+        [
+          'float theta = sin( position.y + time );',
+          'float c = cos( theta );',
+          'float s = sin( theta );',
+          'mat3 m = mat3( c, 0, s, 0, 1, 0, -s, 0, c );',
+          'vec3 transformed = vec3( position ) * m;',
+          'vNormal = vNormal * m;'
+        ].join('\n')
+      )
+      material2.userData.shader = shader
+      console.log('11==============22')
+      console.log(material2.userData)
+    }
+    // 确保 WebGLRenderer 不会重用单个进程
+    material2.customProgramCacheKey = function () {
+      return amount.toFixed(1)
+    }
+    // console.log('33==============44')
+    // console.log(material2.userData)
+    return material2
+  }
+
+  const sphereGeometry2 = new THREE.SphereGeometry(20, 132, 132)
+  // 长方体.
+  const boxGeometry = new THREE.BoxGeometry(80, 380, 80)
+  // const sphereMaterial2 = new THREE.MeshStandardMaterial({ color: 0x3A5FCD })
+  const sphereMaterial2 = buildTwistMaterial(2.0)
+  // const sphere2 = new THREE.Mesh(sphereGeometry2, sphereMaterial2)
+  const sphere2 = new THREE.Mesh(boxGeometry, sphereMaterial2)
+  sphere2.position.set(0, 20, 0)
+  scene.add(sphere2)
+
+  function loop () {
+    requestAnimationFrame(loop)
+    if (Object.keys(sphereMaterial2.userData).length > 0) {
+      const shader = sphereMaterial2.userData.shader
+      // console.log('shader')
+      // console.log(sphereMaterial2.userData)
+      shader.uniforms.time.value = performance.now() / 1000
+    }
+    renderer.render(scene, camera)
+  }
+
+  // 增加相机控件.
+  const controls = new THREE.OrbitControls(camera, renderer.domElement)
+  controls.addEventListener('change', function () {
+    renderer.render(scene, camera)
+  })
+  loop()
+</script>
+</html>
